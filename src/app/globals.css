@@ -125,6 +125,44 @@ textarea:focus-visible {
   min-height: 72px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reset-demo {
+  border: 1px solid var(--line);
+  background: rgba(8, 8, 12, 0.45);
+  backdrop-filter: blur(16px);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--paper);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.reset-demo:hover {
+  border-color: rgba(244, 241, 255, 0.35);
+  background: rgba(20, 20, 28, 0.7);
+}
+
+.reset-demo:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.reset-notice {
+  margin: -8px 0 0;
+  text-align: right;
+  font-size: 12px;
+  color: var(--mist);
+}
+
 .brand {
   font-size: 17px;
   font-weight: 560;

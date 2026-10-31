@@ -59,11 +59,17 @@ export function NetworkingApp({
   const [inboxError, setInboxError] = useState("");
   const [meetingNotice, setMeetingNotice] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [resetNotice, setResetNotice] = useState("");
   const voiceAudio = useRef<HTMLAudioElement>(null);
   const requestVersion = useRef(0);
   const personaVersion = useRef(0);
   const meetingVersion = useRef(0);
   const conversationId = useRef<string | null>(null);
+  const defaultAttendeeId =
+    attendees.find((person) => person.id === "alex")?.id ??
+    attendees[0]?.id ??
+    "";
   const lastRequest = useRef<{
     attendeeId: string;
     sessionId: string;
@@ -153,8 +159,55 @@ export function NetworkingApp({
     setInboxError("");
     setActive(null);
     setMeetingLoading(false);
+    setMeetingError("");
+    setMeetingMessage("");
     setMeetingNotice("");
     lastRequest.current = null;
+  }
+
+  async function resetDemo() {
+    if (resetting) return;
+    setResetting(true);
+    setResetNotice("");
+    voice.stop();
+    requestVersion.current += 1;
+    personaVersion.current += 1;
+    meetingVersion.current += 1;
+    conversationId.current = null;
+    lastRequest.current = null;
+    setChatOpen(false);
+    setMessages([]);
+    setInput("");
+    setLoading(false);
+    setError("");
+    setActive(null);
+    setMeetingMessage("");
+    setMeetingLoading(false);
+    setMeetingError("");
+    setMeetingNotice("");
+    setInboxError("");
+    setRequests([]);
+    try {
+      // Clear the shared inbox before restoring the default persona so a
+      // persona-change reload cannot rehydrate stale meeting requests.
+      const response = await fetch("/api/meeting-requests", {
+        method: "DELETE",
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok)
+        throw new Error(body.error ?? "Could not clear the demo inbox.");
+      setAttendeeId(defaultAttendeeId);
+      setResetNotice("Demo reset. Ready for a new scenario.");
+    } catch (cause) {
+      setAttendeeId(defaultAttendeeId);
+      setResetNotice(
+        cause instanceof Error
+          ? cause.message
+          : "Could not clear the demo inbox.",
+      );
+    } finally {
+      setResetting(false);
+    }
   }
 
   async function ask(message: string, retry = false) {
@@ -309,12 +362,28 @@ export function NetworkingApp({
         <Link className="brand" href="/" aria-label="Common Ground home">
           common ground
         </Link>
-        <span className="pill">
-          <span className="live" />
-          {status?.mode === "qwen" ? "Qwen · " : "Local matching · "}
-          {status?.execution === "daytona" ? "Daytona" : "Demo"}
-        </span>
+        <div className="topbar-actions">
+          <span className="pill">
+            <span className="live" />
+            {status?.mode === "qwen" ? "Qwen · " : "Local matching · "}
+            {status?.execution === "daytona" ? "Daytona" : "Demo"}
+          </span>
+          <button
+            type="button"
+            className="reset-demo"
+            onClick={() => void resetDemo()}
+            disabled={resetting}
+            title="Clear recommendations, chat, and demo meeting requests"
+          >
+            {resetting ? "Resetting…" : "Reset Demo"}
+          </button>
+        </div>
       </header>
+      {resetNotice && (
+        <p className="reset-notice" role="status">
+          {resetNotice}
+        </p>
+      )}
       <main>
         <section className="hero">
           <h1>

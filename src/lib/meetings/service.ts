@@ -1,7 +1,11 @@
 import type { CreateMeetingRequest } from "@/lib/meeting-types";
 import type { AttendeeRepository } from "@/lib/integrations/contracts";
 import { getAttendeeRepository } from "@/lib/integrations/data-sources";
-import { listMeetingRequests, saveMeetingRequest } from "./store";
+import {
+  clearMeetingRequests,
+  listMeetingRequests,
+  saveMeetingRequest,
+} from "./store";
 
 export class MeetingRequestError extends Error {
   constructor(
@@ -77,4 +81,8 @@ export async function getSentMeetingRequests(
   const attendee = await repository.getById(attendeeId);
   if (!attendee) throw new MeetingRequestError("Attendee not found.", 404);
   return listMeetingRequests(attendee.id, attendee.eventId);
+}
+
+export async function resetDemoMeetingInbox() {
+  await clearMeetingRequests();
 }

@@ -50,6 +50,26 @@ export async function listMeetingRequests(attendeeId: string, eventId: string) {
   );
 }
 
+export function clearMeetingRequests(): Promise<void> {
+  // Serialize with writes so a reset cannot race a pending save.
+  const operation = (state.meetingRequestWriteQueue ?? Promise.resolve()).then(
+    async () => {
+      await mkdir(path.dirname(storeFile), { recursive: true });
+      const temporaryFile = `${storeFile}.${randomUUID()}.tmp`;
+      try {
+        await writeFile(temporaryFile, "[]\n", { mode: 0o600 });
+        await rename(temporaryFile, storeFile);
+      } finally {
+        await unlink(temporaryFile).catch((error: NodeJS.ErrnoException) => {
+          if (error.code !== "ENOENT") throw error;
+        });
+      }
+    },
+  );
+  state.meetingRequestWriteQueue = operation.catch(() => undefined);
+  return operation;
+}
+
 export function saveMeetingRequest(
   input: Pick<
     MeetingRequest,

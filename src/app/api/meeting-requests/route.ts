@@ -5,6 +5,7 @@ import {
   MeetingRequestError,
   parseAttendeeId,
   parseMeetingRequest,
+  resetDemoMeetingInbox,
 } from "@/lib/meetings/service";
 
 export const runtime = "nodejs";
@@ -64,6 +65,15 @@ export async function POST(request: Request) {
   try {
     const result = await createMeetingRequest(input);
     return json(result, result.duplicate ? 200 : 201);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function DELETE() {
+  try {
+    await resetDemoMeetingInbox();
+    return json({ ok: true, mode: "demo" });
   } catch (error) {
     return failure(error);
   }

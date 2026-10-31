@@ -1,0 +1,41 @@
+participant_id,participant_type,name,company,position,industry,looking_for,skills,source_url,data_type
+A001,Attendee,Minh Nguyen,NexaLoop,Computer Science Student,Software Development,Finding Teammates;Internship Opportunities;Learning New Skills,Python;Java;Problem Solving,,Synthetic
+A002,Attendee,Aisha Rahman,BrightPath AI,Junior Machine Learning Engineer,Artificial Intelligence and Machine Learning,Finding a Mentor;Networking;Sharing Knowledge,Python;Machine Learning;Data Analysis,,Synthetic
+A003,Attendee,Ethan Lim,PixelForge Studio,Indie Game Developer,Gaming,Finding Teammates;Finding Projects to Collaborate On;Networking,Unity;C#;Game Development,,Synthetic
+A004,Attendee,Priya Nair,FinSpring,Product Analyst,FinTech,Networking;Job Opportunities;Learning New Skills,SQL;Product Analytics;Stakeholder Communication,,Synthetic
+A005,Attendee,Lucas Tan,Northstar Labs,Startup Founder,Deep Technology,Finding a Co-founder;Investors or Funding;Business Partnerships,Business Strategy;Pitching;Product Development,,Synthetic
+A006,Attendee,Sofia Chen,DesignOrbit,UX/UI Designer,Software Development,Finding Projects to Collaborate On;Networking;Potential Clients,Figma;User Research;Prototyping,,Synthetic
+A007,Attendee,Arjun Patel,CloudNest,Cloud Engineer,Information Technology,Finding a Mentor;Job Opportunities;Sharing Knowledge,Cloud Computing;Linux;DevOps,,Synthetic
+A008,Attendee,Chloe Wong,DataSprout,Data Analyst,Data Science and Analytics,Networking;Learning New Skills;Job Opportunities,Python;SQL;Data Visualisation,,Synthetic
+A009,Attendee,Daniel Koh,SecureWave,Cybersecurity Analyst,Cybersecurity,Finding a Mentor;Networking;Sharing Knowledge,Network Security;Threat Analysis;Linux,,Synthetic
+A010,Attendee,Hana Le,MedNova Digital,Biomedical Data Research Assistant,Healthcare Technology,Finding Projects to Collaborate On;Learning New Skills;Networking,Research;Python;Data Analysis,,Synthetic
+A011,Attendee,Ryan Goh,EduBridge,EdTech Product Manager,Education Technology,Business Partnerships;Networking;Sharing Knowledge,Product Management;Agile;Roadmapping,,Synthetic
+A012,Attendee,Isabella Tan,GreenMetric,Climate Tech Associate,Climate Technology,Business Partnerships;Finding Projects to Collaborate On;Networking,Sustainability;Market Research;Project Management,,Synthetic
+A013,Attendee,Muhammad Firdaus,RoboWorks,Robotics Student,Robotics,Finding Teammates;Finding a Mentor;Learning New Skills,ROS;Python;Embedded Systems,,Synthetic
+A014,Attendee,Grace Ho,VentureSpring,Investment Associate,Venture Capital,Networking;Finding Projects to Collaborate On;Business Partnerships,Financial Modelling;Market Analysis;Startup Evaluation,,Synthetic
+A015,Attendee,Jayden Ong,ShopTrail,E-commerce Developer,E-commerce,Job Opportunities;Networking;Learning New Skills,JavaScript;APIs;Database Design,,Synthetic
+A016,Attendee,Mei Lin,SignalCraft,Telecommunications Engineer,Telecommunications,Finding a Mentor;Sharing Knowledge;Networking,5G;Network Engineering;Troubleshooting,,Synthetic
+A017,Attendee,Noah Chua,QuantumSeed,Physics Graduate Researcher,Deep Technology,Finding Projects to Collaborate On;Finding a Mentor;Learning New Skills,Quantum Computing;Python;Scientific Research,,Synthetic
+A018,Attendee,Fatima Yusuf,CareSync,Healthcare Startup Co-founder,Healthcare Technology,Investors or Funding;Business Partnerships;Finding a Co-founder,Entrepreneurship;Business Development;Healthcare Innovation,,Synthetic
+A019,Attendee,Oliver Lee,AdPilot,Marketing Specialist,Marketing and Advertising,Potential Clients;Networking;Job Opportunities,Digital Marketing;Content Strategy;Analytics,,Synthetic
+A020,Attendee,Zara Ahmad,CodeHarbour,Software Engineering Intern,Software Development,Internship Opportunities;Finding a Mentor;Finding Teammates,Java;Git;Unit Testing,,Synthetic
+A021,Attendee,Kai Zhang,EdgeMotion,Embedded Software Engineer,Robotics,Finding Projects to Collaborate On;Networking;Sharing Knowledge,C++;Embedded Systems;IoT,,Synthetic
+A022,Attendee,Amelia Teo,BlueLedger,FinTech Operations Analyst,FinTech,Networking;Business Partnerships;Learning New Skills,Process Improvement;Data Analysis;Compliance,,Synthetic
+A023,Attendee,Ravi Menon,BioCompute,Computational Biology Researcher,Healthcare Technology,Finding Projects to Collaborate On;Sharing Knowledge;Networking,Python;Bioinformatics;Machine Learning,,Synthetic
+A024,Attendee,Nicole Yeo,LaunchPad Works,Startup Programme Manager,Consulting,Business Partnerships;Networking;Finding Projects to Collaborate On,Programme Management;Mentoring;Stakeholder Management,,Synthetic
+A025,Attendee,Samuel Ho,ShieldStack,Security Engineer,Cybersecurity,Finding a Mentor;Job Opportunities;Sharing Knowledge,Penetration Testing;Python;Security Engineering,,Synthetic
+A026,Attendee,Linh Pham,MotionMint,3D Artist,Gaming,Finding Teammates;Finding Projects to Collaborate On;Networking,Blender;3D Modelling;Game Art,,Synthetic
+A027,Attendee,Isaac Ng,ModelWorks,AI Software Engineer,Artificial Intelligence and Machine Learning,Networking;Learning New Skills;Finding Projects to Collaborate On,Python;LLMs;API Development,,Synthetic
+A028,Attendee,Nadia Ismail,PeopleForward,People and Culture Associate,Other,Networking;Job Opportunities;Sharing Knowledge,Talent Development;Communication;Workshop Facilitation,,Synthetic
+A029,Attendee,Marcus Teo,BuildSphere,Product Designer,Software Development,Finding a Mentor;Networking;Potential Clients,Design Systems;Figma;Prototyping,,Synthetic
+A030,Attendee,Elaine Chua,SeedSpark,Angel Investment Analyst,Venture Capital,Networking;Business Partnerships;Investors or Funding,Due Diligence;Financial Analysis;Startup Research,,Synthetic
+A031,Attendee,Dylan Wong,AeroCircuit,Electronics Engineer,Deep Technology,Finding Projects to Collaborate On;Finding a Mentor;Learning New Skills,PCB Design;Electronics;Prototyping,,Synthetic
+A032,Attendee,Ananya Rao,InsightArc,Business Intelligence Analyst,Data Science and Analytics,Job Opportunities;Networking;Sharing Knowledge,Power BI;SQL;Data Storytelling,,Synthetic
+A033,Attendee,Benjamin Foo,FleetIQ,Mobility Software Developer,Software Development,Finding Teammates;Business Partnerships;Learning New Skills,Python;Backend Development;Cloud Services,,Synthetic
+A034,Attendee,Yuki Sato,OceanKind,Sustainability Research Associate,Climate Technology,Finding Projects to Collaborate On;Networking;Sharing Knowledge,Lifecycle Assessment;Research;Data Analysis,,Synthetic
+A035,Attendee,Farhan Aziz,CampusAI,AI Club President,Artificial Intelligence and Machine Learning,Finding Teammates;Finding a Mentor;Learning New Skills,Python;Leadership;Event Organisation,,Synthetic
+A036,Attendee,Emma Goh,MarketMosaic,Business Development Executive,Consulting,Potential Clients;Business Partnerships;Networking,Sales;Negotiation;Market Research,,Synthetic
+A037,Attendee,Sean Lim,LedgerLeaf,Full-stack Developer,FinTech,Job Opportunities;Finding a Mentor;Finding Projects to Collaborate On,React;Node.js;SQL,,Synthetic
+A038,Attendee,Kavya Iyer,NovaMed Devices,Biomedical Engineer,Healthcare Technology,Networking;Business Partnerships;Learning New Skills,Biomedical Engineering;Prototyping;Data Analysis,,Synthetic
+A039,Attendee,Adrian Tan,PlayCircuit,Game Producer,Gaming,Business Partnerships;Finding Projects to Collaborate On;Networking,Game Production;Agile;Team Coordination,,Synthetic
+A040,Attendee,Nurul Huda,LearnLoop,Learning Experience Designer,Education Technology,Networking;Sharing Knowledge;Finding Projects to Collaborate On,Instructional Design;UX Research;Content Design,,Synthetic

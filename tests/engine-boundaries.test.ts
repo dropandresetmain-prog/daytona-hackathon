@@ -16,6 +16,9 @@ import type {
   NetworkingContextStore,
 } from "../src/lib/integrations/context-contracts";
 
+// This suite exercises the original fixture personas even when a CSV is installed.
+process.env.ATTENDEE_DATA_SOURCE = "mock";
+
 type Executor = NonNullable<Parameters<typeof getChatRecommendations>[2]>;
 type Context = RankingContext & { limit: number; history?: ChatMessage[] };
 

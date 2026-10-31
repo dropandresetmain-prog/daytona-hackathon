@@ -1,16 +1,18 @@
 # Final UI integration
 
-Replace the placeholder `src/components/networking-app.tsx`; the backend does not
-depend on its layout. `src/app/page.tsx` currently passes:
+`src/components/networking-app.tsx` now combines PR #1's visual design with our
+chatbot, meeting request, and voice flows. The backend does not depend on its
+layout. `src/app/page.tsx` passes:
 
 ```ts
-{ event: { name: string; description: string }, attendees: AttendeeProfile[] }
+{ event: { name: string; description: string }, attendees: AttendeeProfile[], dataSource: "mock" | "csv" }
 ```
 
 Import shared types from `@/lib/types` and `@/lib/meeting-types`. The page uses
 `publicProfile` before passing fixtures to the browser. Preserve that boundary
 when switching to the teammate's repository; email/phone are not client props.
-All current profiles are fictional. Default demo identity: `alex`.
+The supplied CSV has 40 profiles marked Synthetic. Its first row is the default
+persona. Explicit mock mode uses 100 fictional fixtures and defaults to `alex`.
 
 ## Conversation
 
@@ -29,8 +31,8 @@ History contains previous `{ "role": "user" | "assistant", "content": "..." }`
 records, excluding the new message. Send at most the last ten messages. Each
 message is 1–1000 characters. Do not send recommendation objects in history.
 Keep `sessionId` stable within a conversation and replace it when changing persona
-or starting a new conversation. The Neo4j context adapter uses it with attendee
-and event IDs; it is not an authentication token.
+or starting a new conversation. An optional context adapter would use it with
+attendee and event IDs; it is not an authentication token. No context store is enabled.
 
 The response is `ChatResponse`:
 
@@ -40,7 +42,7 @@ The response is `ChatResponse`:
   eventId: string;
   goal: string;
   message: string;
-  attendeeCount: number; // candidates considered, currently 99 excluding requester
+  attendeeCount: number; // candidates considered: 39 for CSV, 99 for mock fixtures
   memory: "client" | "context-store";
   mode: "mock" | "qwen";
   execution: { provider: "local" | "daytona"; model?: string; sandboxId?: string };
@@ -117,9 +119,8 @@ The endpoint lists outgoing requests only; it is not an authenticated inbox.
 }
 ```
 
-Keep voice disabled while `voice.available` is false. `/api/voice/session` is an
-optional server relay seam. `src/lib/voice/client.ts` supplies a reusable connection
-helper for the final UI:
+Keep voice disabled when not configured. `/api/voice/session` relays SDP without
+exposing the key. `src/lib/voice/client.ts` supplies a reusable connection helper:
 
 ```ts
 const voice = createVoiceConnection({
@@ -135,13 +136,16 @@ voice.close();
 Default behavior requests no microphone and plays no audio. For a user-initiated
 audio call, explicitly set `captureMicrophone:true`, `playRemoteAudio:true`, and
 pass a caller-owned `audioElement`. `ready` means transport/data channel connected;
-it does not prove audible playback. Wire microphone controls, visible call state,
-event handling, and teardown in the final UI before advertising voice availability.
+it does not prove audible playback. `use-networking-voice.ts` now wires microphone
+controls, call state, transcripts, teardown, and the Qwen recommendation tool.
 Never put a long-lived provider key in a client component or client environment.
 
-Live transport was verified with Qwen's `session.created` event and both data
-channels connected, with no microphone capture. Voice still needs recommendation
-tool/context wiring; it currently does not automatically call `/api/chat`.
+`src/lib/voice/protocol.ts` defines Qwen's nested function-tool schema. Only
+completed `recommend_connections` calls execute, with deduplication by call ID.
+The selected persona and session stay in the app; voice supplies only a goal.
+Tool results come from `/api/chat` and are sent back as `function_call_output`,
+then `response.create`. Voice cannot submit meeting requests. End the voice call
+when changing persona, closing the assistant, or unmounting the UI.
 
 Errors use `{error:string}`. Chat: 400 invalid input/JSON, 404 missing persona,
 413 oversized body, 415 media type, 502 execution failure. Meeting requests add

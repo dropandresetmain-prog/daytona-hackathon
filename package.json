@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:unit": "tsx --test tests/engine-boundaries.test.ts tests/voice-client.test.ts",
+    "test:unit": "tsx --test tests/engine-boundaries.test.ts tests/voice-client.test.ts tests/voice-protocol.test.ts tests/csv-repository.test.ts",
     "check:providers": "tsx scripts/check-providers.ts",
     "test:smoke": "node --test tests/recommendations.test.mjs"
   },
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@daytona/sdk": "^0.227.0",
+    "csv-parse": "^7.0.3",
     "next": "^16.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

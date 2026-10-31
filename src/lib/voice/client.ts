@@ -29,6 +29,7 @@ export interface VoiceConnection {
   readonly state: VoiceConnectionState;
   sendEvent: (event: VoiceRealtimeEvent) => void;
   close: () => void;
+  setMicrophoneMuted: (muted: boolean) => void;
 }
 
 /**
@@ -320,6 +321,10 @@ export function createVoiceConnection(
       return state;
     },
     close,
+    setMicrophoneMuted(muted) {
+      for (const track of microphone?.getAudioTracks() ?? [])
+        track.enabled = !muted;
+    },
     sendEvent(event) {
       if (closed || outgoing.readyState !== "open")
         throw new Error("Voice control channel is not open.");

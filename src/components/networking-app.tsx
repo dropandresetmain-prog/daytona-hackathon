@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { RecommendationCards } from "./recommendation-cards";
+import { useNetworkingVoice } from "./use-networking-voice";
 import type {
   AttendeeProfile,
   ChatResponse,
@@ -30,10 +32,15 @@ type Status = {
 interface Props {
   event: { name: string; description: string };
   attendees: AttendeeProfile[];
+  dataSource?: "mock" | "csv";
 }
 const firstQuestion = "Who should I connect with at this conference?";
 
-export function NetworkingApp({ event, attendees }: Props) {
+export function NetworkingApp({
+  event,
+  attendees,
+  dataSource = "mock",
+}: Props) {
   const [attendeeId, setAttendeeId] = useState(
     attendees.find((person) => person.id === "alex")?.id ??
       attendees[0]?.id ??
@@ -52,8 +59,7 @@ export function NetworkingApp({ event, attendees }: Props) {
   const [inboxError, setInboxError] = useState("");
   const [meetingNotice, setMeetingNotice] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
-  const [voiceMessage, setVoiceMessage] = useState("");
-  const [voiceLoading, setVoiceLoading] = useState(false);
+  const voiceAudio = useRef<HTMLAudioElement>(null);
   const requestVersion = useRef(0);
   const personaVersion = useRef(0);
   const meetingVersion = useRef(0);
@@ -72,6 +78,17 @@ export function NetworkingApp({ event, attendees }: Props) {
   const sent = active
     ? requests.find((request) => request.toAttendeeId === active.attendee.id)
     : undefined;
+
+  const voice = useNetworkingVoice({
+    attendeeName: selected?.name ?? "Attendee",
+    audio: voiceAudio,
+    onRecommend: recommendByVoice,
+  });
+  const latest = [...messages]
+    .reverse()
+    .find((message) => message.result)?.result;
+  const sourceLabel =
+    dataSource === "mock" ? "Fictional demo profiles" : "CSV attendee profiles";
 
   useEffect(() => {
     let cancelled = false;
@@ -122,6 +139,7 @@ export function NetworkingApp({ event, attendees }: Props) {
   }, [messages, loading, error]);
 
   function changePersona(id: string) {
+    voice.stop();
     requestVersion.current += 1;
     personaVersion.current += 1;
     meetingVersion.current += 1;
@@ -136,8 +154,6 @@ export function NetworkingApp({ event, attendees }: Props) {
     setActive(null);
     setMeetingLoading(false);
     setMeetingNotice("");
-    setVoiceMessage("");
-    setVoiceLoading(false);
     lastRequest.current = null;
   }
 
@@ -152,12 +168,10 @@ export function NetworkingApp({ event, attendees }: Props) {
             attendeeId,
             sessionId: conversationId.current,
             message: message.trim(),
-            history: messages
-              .slice(-10)
-              .map(({ role, content }) => ({
-                role,
-                content: content.slice(0, 1000),
-              })),
+            history: messages.slice(-10).map(({ role, content }) => ({
+              role,
+              content: content.slice(0, 1000),
+            })),
           };
     const version = ++requestVersion.current;
     lastRequest.current = request;
@@ -186,6 +200,7 @@ export function NetworkingApp({ event, attendees }: Props) {
           ...previous,
           { role: "assistant", content: result.message, result },
         ]);
+        return result;
       }
     } catch (cause) {
       if (version === requestVersion.current)
@@ -214,7 +229,10 @@ export function NetworkingApp({ event, attendees }: Props) {
     setMeetingLoading(false);
     setActive(recommendation);
     setMeetingMessage(
-      `Hi ${recommendation.attendee.name.split(" ")[0]}, I'd love to meet at ${event.name}. ${recommendation.conversationStarter}`,
+      `${recommendation.conversationStarter} Would you like to meet at ${event.name}?`.slice(
+        0,
+        1000,
+      ),
     );
     setMeetingError("");
     setMeetingNotice("");
@@ -273,206 +291,176 @@ export function NetworkingApp({ event, attendees }: Props) {
     }
   }
 
-  async function connectVoice() {
-    if (voiceLoading) return;
-    const version = personaVersion.current;
-    setVoiceLoading(true);
-    setVoiceMessage("");
-    try {
-      const response = await fetch("/api/voice/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ attendeeId }),
-      });
-      const body = await response.json();
-      if (version === personaVersion.current)
-        setVoiceMessage(
-          body.error ??
-            body.message ??
-            "Voice session checked. Text chat is ready to use.",
-        );
-    } catch {
-      if (version === personaVersion.current)
-        setVoiceMessage(
-          "Voice connection unavailable. You can keep chatting by text.",
-        );
-    } finally {
-      if (version === personaVersion.current) setVoiceLoading(false);
-    }
+  async function recommendByVoice(goal: string): Promise<ChatResponse> {
+    const result = await ask(goal);
+    if (!result)
+      throw new Error("The recommendation request did not complete.");
+    return result;
   }
 
   return (
     <div className="shell">
+      <div className="aurora" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
       <header className="topbar">
         <Link className="brand" href="/" aria-label="Common Ground home">
-          <span className="brand-icon" aria-hidden="true">
-            ↗
-          </span>
-          common ground<span className="brand-dot">.</span>
+          common ground
         </Link>
-        <div className="header-right">
-          <span className="demo-badge">
-            <span />
-            Seeded conference demo
-          </span>
-          <span className="header-person">
-            <span className="avatar tiny">
-              {initials(selected?.name ?? "Guest")}
-            </span>
-            {selected?.name}
-          </span>
-        </div>
+        <span className="pill">
+          <span className="live" />
+          {status?.mode === "qwen" ? "Qwen · " : "Local matching · "}
+          {status?.execution === "daytona" ? "Daytona" : "Demo"}
+        </span>
       </header>
       <main>
         <section className="hero">
-          <div className="hero-copy">
-            <p className="eyebrow">LESS SMALL TALK. MORE COMMON GROUND.</p>
-            <h1>
-              Your people
-              <br />
-              are <em>in this room.</em>
-            </h1>
-            <p className="intro-copy">
-              The right conversation can change your next chapter. Tell your
-              networking assistant what you’re looking for. Find the people
-              worth a hello.
-            </p>
-            <button
-              className="primary-button hero-button"
-              onClick={() => setChatOpen(true)}
-              disabled={!selected}
-            >
-              <ChatIcon />
-              <span>Find my connections</span>
-              <span aria-hidden="true">↗</span>
-            </button>
-            <div className="hero-social">
-              <div className="avatar-stack">
-                {attendees.slice(1, 5).map((person, index) => (
-                  <span key={person.id} className={`avatar tone-${index % 4}`}>
-                    {initials(person.name)}
-                  </span>
-                ))}
-              </div>
-              <p>
-                <strong>{eventAttendees.length} seeded attendees</strong>
-                <br />A room full of possibilities.
-              </p>
-            </div>
-          </div>
-          <div className="connection-map" aria-hidden="true">
-            <div className="map-orbit orbit-one" />
-            <div className="map-orbit orbit-two" />
-            <div className="map-line line-one" />
-            <div className="map-line line-two" />
-            <div className="map-line line-three" />
-            <div className="map-center">
-              <span className="map-spark">✳</span>
-              <span>
-                A little intention.
-                <br />
-                <em>A better connection.</em>
-              </span>
-            </div>
-            {attendees.slice(1, 4).map((person, index) => (
-              <div className={`map-person map-person-${index}`} key={person.id}>
-                <span className={`avatar tone-${index}`}>
-                  {initials(person.name)}
-                </span>
-                <span>
-                  <strong>{person.name}</strong>
-                  <small>{person.position}</small>
-                </span>
-                <span className="map-plus">↗</span>
-              </div>
-            ))}
-            <span className="map-caption">FIND THE OVERLAP.</span>
-          </div>
-        </section>
-        <section className="conference-bar" aria-label="Conference details">
-          <div className="conference-name">
-            <span className="event-icon" aria-hidden="true">
-              ◎
-            </span>
-            <div>
-              <p className="eyebrow">YOUR CONFERENCE</p>
-              <h2>{event.name}</h2>
-              <p>{event.description}</p>
-            </div>
-          </div>
-          <div className="conference-stat">
-            <strong>{eventAttendees.length}</strong>
-            <span>seeded profiles</span>
-          </div>
-          <div className="conference-stat">
-            <strong>{requests.length.toString().padStart(2, "0")}</strong>
-            <span>demo meeting requests</span>
-          </div>
-        </section>
-        <section className="attendee-section">
-          <div className="section-top">
-            <div>
-              <p className="eyebrow">THE PEOPLE BEHIND THE POSSIBILITIES</p>
-              <h2>A few faces in the room.</h2>
-            </div>
-            <button className="text-button" onClick={() => setChatOpen(true)}>
-              Find your top five <span aria-hidden="true">↗</span>
-            </button>
-          </div>
-          <div className="attendee-grid">
-            {eventAttendees
-              .filter((person) => person.id !== attendeeId)
-              .slice(0, 4)
-              .map((person, index) => (
-                <article className="attendee-card" key={person.id}>
-                  <span className={`avatar large tone-${index % 4}`}>
-                    {initials(person.name)}
-                  </span>
-                  <span className="industry">{person.industry}</span>
-                  <h3>{person.name}</h3>
-                  <p>
-                    {person.position}
-                    <br />
-                    {person.company}
-                  </p>
-                  <div className="tags">
-                    {person.canOffer.slice(0, 2).map((offer) => (
-                      <span key={offer}>{offer}</span>
-                    ))}
-                  </div>
-                </article>
-              ))}
-          </div>
-        </section>
-        {requests.length > 0 && (
-          <section className="request-strip" aria-label="Your meeting requests">
-            <div>
-              <h2>Your demo meeting requests</h2>
-              <p>
-                Saved in the demo inbox. No external notifications are sent.
-              </p>
-            </div>
-            <div className="request-pills">
-              {requests.map((request) => (
-                <span key={request.id}>
-                  {attendees.find(
-                    (person) => person.id === request.toAttendeeId,
-                  )?.name ?? request.toAttendeeId}{" "}
-                  <small>Pending</small>
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-        {inboxError && (
-          <p className="inline-error" role="alert">
-            {inboxError}
+          <h1>
+            Find your next
+            <br />
+            common ground
+          </h1>
+          <p className="lede">
+            A room full of people. A conversation worth having. Ask your
+            assistant who to connect with and why.
           </p>
-        )}
+          <p className="meta">
+            <strong>{event.name}</strong>
+            <span>
+              {eventAttendees.length} attendees · {sourceLabel.toLowerCase()}
+            </span>
+          </p>
+        </section>
+        <div className="workspace">
+          <aside className="ticket">
+            <label htmlFor="page-persona">You are</label>
+            <select
+              id="page-persona"
+              value={attendeeId}
+              onChange={(event) => changePersona(event.target.value)}
+            >
+              {attendees.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.name}
+                  {person.company ? ", " + person.company : ""}
+                </option>
+              ))}
+            </select>
+            {selected && (
+              <div className="you">
+                <span className="avatar">{initials(selected.name)}</span>
+                <div>
+                  <strong>{selected.name}</strong>
+                  <p>
+                    {[selected.position, selected.company]
+                      .filter(Boolean)
+                      .join(" · ") || "Conference attendee"}
+                  </p>
+                </div>
+                <p className="bio">
+                  {selected.bio || "No biography supplied."}
+                </p>
+                <div className="chips">
+                  {selected.lookingFor.map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button
+              className="go"
+              disabled={!selected}
+              onClick={() => setChatOpen(true)}
+            >
+              Find my connections <span aria-hidden="true">↗</span>
+            </button>
+            <p className="fine">
+              Ask by text or voice. Recommendations use the attendee data;
+              contact details stay private.
+            </p>
+            <p className="fine">
+              {sourceLabel}. Meeting requests stay in this demo.
+            </p>
+          </aside>
+          <section
+            className="guestlist"
+            aria-labelledby="results-title"
+            aria-busy={loading}
+          >
+            <div className="guestlist-head">
+              <h2 id="results-title">People worth a hello</h2>
+              {latest && (
+                <span className="pill quiet">
+                  {latest.recommendations.length} connections
+                </span>
+              )}
+            </div>
+            {latest ? (
+              <>
+                <p className="results-summary">{latest.message}</p>
+                <RecommendationCards
+                  recommendations={latest.recommendations}
+                  requests={requests}
+                  onSelect={openProfile}
+                />
+              </>
+            ) : (
+              <div className="waiting">
+                <div className="faces" aria-hidden="true">
+                  {eventAttendees
+                    .filter((person) => person.id !== attendeeId)
+                    .slice(0, 3)
+                    .map((person) => (
+                      <span key={person.id}>{initials(person.name)}</span>
+                    ))}
+                </div>
+                <h3>Your next conversation starts here.</h3>
+                <p>
+                  Open the assistant and ask, “Who should I connect with at this
+                  conference?”
+                </p>
+                <button
+                  className="text-button"
+                  onClick={() => setChatOpen(true)}
+                >
+                  Find your top five ↗
+                </button>
+              </div>
+            )}
+            {requests.length > 0 && (
+              <section
+                className="request-strip"
+                aria-label="Your meeting requests"
+              >
+                <h3>Your demo meeting requests</h3>
+                <div className="request-pills">
+                  {requests.map((request) => (
+                    <span key={request.id}>
+                      {attendees.find(
+                        (person) => person.id === request.toAttendeeId,
+                      )?.name ?? "Attendee"}{" "}
+                      <small>Pending</small>
+                    </span>
+                  ))}
+                </div>
+                <p className="fine">
+                  Saved locally. No external notifications are sent.
+                </p>
+              </section>
+            )}
+            {inboxError && (
+              <p className="error" role="alert">
+                {inboxError}
+              </p>
+            )}
+          </section>
+        </div>
       </main>
       <footer>
-        <span>common ground.</span>
-        <p>Fictional attendee data · Meeting requests stay in this demo.</p>
+        <span>common ground</span>
+        <p>{sourceLabel} · Useful introductions, one conversation at a time.</p>
       </footer>
       <button
         className="chat-launcher"
@@ -487,7 +475,10 @@ export function NetworkingApp({ event, attendees }: Props) {
 
       <Modal
         open={chatOpen}
-        onClose={() => setChatOpen(false)}
+        onClose={() => {
+          voice.stop();
+          setChatOpen(false);
+        }}
         className="chat-dialog"
         label="Networking assistant"
       >
@@ -498,15 +489,18 @@ export function NetworkingApp({ event, attendees }: Props) {
           <div>
             <h2>Your networking assistant</h2>
             <p>
-              {status?.llm.configured
+              {status?.mode === "qwen"
                 ? "Qwen configured"
                 : "Local demo matching"}{" "}
-              · {eventAttendees.length} seeded attendees
+              · {eventAttendees.length} attendees
             </p>
           </div>
           <button
             className="icon-button"
-            onClick={() => setChatOpen(false)}
+            onClick={() => {
+              voice.stop();
+              setChatOpen(false);
+            }}
             aria-label="Close assistant"
           >
             ×
@@ -594,48 +588,11 @@ export function NetworkingApp({ event, attendees }: Props) {
                   {message.result.warning && (
                     <p className="result-warning">{message.result.warning}</p>
                   )}
-                  <div className="chat-recommendations">
-                    {message.result.recommendations.map((recommendation) => (
-                      <button
-                        className="match-card"
-                        key={recommendation.attendee.id}
-                        onClick={() => openProfile(recommendation)}
-                        aria-label={`View ${recommendation.attendee.name} and request a meeting`}
-                      >
-                        <div className="match-top">
-                          <span
-                            className={`avatar tone-${(recommendation.rank - 1) % 4}`}
-                          >
-                            {initials(recommendation.attendee.name)}
-                          </span>
-                          <div>
-                            <h3>{recommendation.attendee.name}</h3>
-                            <p>
-                              {recommendation.attendee.position} ·{" "}
-                              {recommendation.attendee.company}
-                            </p>
-                          </div>
-                          <span className="rank">0{recommendation.rank}</span>
-                        </div>
-                        <p className="match-reason">
-                          {recommendation.reasons[0] ??
-                            recommendation.mutualValue}
-                        </p>
-                        <div className="match-bottom">
-                          <span>{recommendation.attendee.industry}</span>
-                          <span>
-                            {requests.some(
-                              (request) =>
-                                request.toAttendeeId ===
-                                recommendation.attendee.id,
-                            )
-                              ? "Request pending ✓"
-                              : "View connection ↗"}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  <RecommendationCards
+                    recommendations={message.result.recommendations}
+                    requests={requests}
+                    onSelect={openProfile}
+                  />
                   {message.result.recommendations.length === 0 && (
                     <p className="field-hint">
                       No connections found. Try describing the skills or
@@ -706,32 +663,80 @@ export function NetworkingApp({ event, attendees }: Props) {
           </form>
           <div className="composer-footer">
             <span>
-              Seeded profiles · {selected?.name.split(" ")[0]}’s perspective
+              {sourceLabel} · {selected?.name.split(" ")[0]}’s perspective
             </span>
             <button
               className="voice-button"
               type="button"
-              disabled={!status?.voice.available || voiceLoading}
-              title={
-                status?.voice.available
-                  ? "Check realtime voice session"
-                  : "Realtime voice is not connected yet"
+              disabled={!status?.voice.configured || !selected}
+              onClick={() =>
+                voice.state === "connected" || voice.state === "connecting"
+                  ? voice.stop()
+                  : void voice.start()
               }
-              onClick={() => void connectVoice()}
             >
               <MicIcon />
-              {voiceLoading
-                ? "Connecting…"
-                : status?.voice.available
-                  ? "Voice session"
-                  : "Voice · not connected"}
+              {voice.state === "connecting"
+                ? "Cancel call"
+                : voice.state === "connected"
+                  ? "End voice"
+                  : status?.voice.configured
+                    ? "Start voice"
+                    : "Voice unavailable"}
             </button>
           </div>
-          {voiceMessage && (
-            <p className="voice-message" role="status">
-              {voiceMessage}
-            </p>
+          {(voice.state !== "idle" || voice.error) && (
+            <section
+              className="voice-panel"
+              aria-label="Voice call"
+              aria-live="polite"
+            >
+              <div className="voice-top">
+                <span className={voice.state === "connected" ? "live" : ""} />
+                <strong>
+                  {voice.state === "connecting"
+                    ? "Connecting voice…"
+                    : voice.state === "connected"
+                      ? "Voice connected · listening"
+                      : "Voice stopped"}
+                </strong>
+                {voice.state === "connected" && (
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={voice.toggleMute}
+                  >
+                    {voice.muted ? "Unmute microphone" : "Mute microphone"}
+                  </button>
+                )}
+              </div>
+              {voice.heard && (
+                <p>
+                  <strong>You:</strong> {voice.heard}
+                </p>
+              )}
+              {voice.spoken && (
+                <p>
+                  <strong>Assistant:</strong> {voice.spoken}
+                </p>
+              )}
+              {voice.error && (
+                <p className="voice-error" role="alert">
+                  {voice.error}
+                </p>
+              )}
+              <p className="fine">
+                Voice recommendations use the same engine. Select a card to send
+                a meeting request.
+              </p>
+            </section>
           )}
+          <audio
+            ref={voiceAudio}
+            controls
+            hidden={voice.state !== "connected"}
+            aria-label="Voice assistant playback"
+          />
         </div>
       </Modal>
 
@@ -767,7 +772,9 @@ export function NetworkingApp({ event, attendees }: Props) {
                 <span className="industry">{active.attendee.industry}</span>
               </div>
             </div>
-            <p className="profile-bio">{active.attendee.bio}</p>
+            {active.attendee.bio && (
+              <p className="profile-bio">{active.attendee.bio}</p>
+            )}
             <h3 className="detail-heading">Why you should connect</h3>
             <ul className="reasons">
               {active.reasons.map((reason) => (
@@ -779,6 +786,9 @@ export function NetworkingApp({ event, attendees }: Props) {
               <p>{active.mutualValue}</p>
             </div>
             <p className="tag-label">CAN OFFER</p>
+            {active.attendee.canOffer.length === 0 && (
+              <p className="field-hint">No offers supplied.</p>
+            )}
             <div className="tags">
               {active.attendee.canOffer.map((offer) => (
                 <span key={offer}>{offer}</span>

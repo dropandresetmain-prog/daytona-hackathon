@@ -120,7 +120,7 @@ export async function getChatRecommendations(
     ...(result.mode === "mock"
       ? {
           warning:
-            "Offline demo: recommendations use deterministic profile matching over fictional attendees.",
+            "Local rules: recommendations use deterministic profile matching, not LLM reasoning.",
         }
       : {}),
   };

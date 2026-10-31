@@ -9,12 +9,12 @@ export function GET() {
   return NextResponse.json(
     {
       configured: Boolean(config.apiKey && config.workspace),
-      available: false,
+      available: Boolean(config.apiKey && config.workspace),
       model:
         process.env.QWEN_REALTIME_MODEL?.trim() ||
         "qwen3.8-omni-flash-realtime",
       message:
-        "Server WebRTC handshake is prepared. Browser microphone and audio transport are not enabled yet.",
+        "Start a voice call to connect the microphone and audio. Recommendations use the app's chat engine.",
       missing: [
         ...(!config.apiKey ? ["ALIBABA_CLOUD_API_KEY"] : []),
         ...(!process.env.ALIBABA_WORKSPACE_ID?.trim()
@@ -27,7 +27,7 @@ export function GET() {
 }
 
 // Relay SDP on the server; never hand the long-lived provider key to a browser.
-// This prepares the optional voice seam without claiming a working audio UI.
+// Browser media and recommendation tools are handled by useNetworkingVoice.
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   const requestUrl = new URL(request.url);

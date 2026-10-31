@@ -1,14 +1,23 @@
 import { NetworkingApp } from "@/components/networking-app";
-import { demoEvent } from "@/lib/mock-data";
 import { publicProfile } from "@/lib/attendee-profile";
-import { getAttendeeRepository } from "@/lib/integrations/data-sources";
+import {
+  getAttendeeRepository,
+  getAttendeeDataSource,
+} from "@/lib/integrations/data-sources";
+import { getNetworkingEvent } from "@/lib/event-config";
 import { connection } from "next/server";
 
 export default async function Home() {
-  // Keep future graph-backed profile reads at request time, outside the build.
+  // Read CSV at request time so file errors are not hidden in a static build.
   await connection();
-  const attendees = await getAttendeeRepository().listByEvent(demoEvent.id);
+  const dataSource = getAttendeeDataSource();
+  const event = getNetworkingEvent(dataSource);
+  const attendees = await getAttendeeRepository().listByEvent(event.id);
   return (
-    <NetworkingApp event={demoEvent} attendees={attendees.map(publicProfile)} />
+    <NetworkingApp
+      event={event}
+      attendees={attendees.map(publicProfile)}
+      dataSource={dataSource}
+    />
   );
 }

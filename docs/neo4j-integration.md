@@ -1,21 +1,22 @@
-# Neo4j and CSV branch integration
+# Optional context-store integration
 
-Neo4j is the planned source for attendee retrieval and conversation context. This
-branch supplies adapters and a seeded fallback; it does not define the graph,
-write Cypher, ingest CSV, or implement a competing context database.
+The demo now loads the supplied CSV directly, without Neo4j. This document keeps
+the optional conversation-context contract for a later database adapter. No graph
+queries or persisted conversation context are implemented. CSV configuration is in
+[csv-integration.md](csv-integration.md).
 
 ## One composition point
 
-Replace the two bindings in `src/lib/integrations/data-sources.ts` when the graph
-branch is ready:
+If a database adapter is added later, keep the composition point in
+`src/lib/integrations/data-sources.ts`:
 
-- `attendeeRepository`: an `AttendeeRepository` from `integrations/contracts.ts`.
+- `getAttendeeRepository()`: an `AttendeeRepository` from `integrations/contracts.ts`.
 - `contextStore`: a `NetworkingContextStore` from `integrations/context-contracts.ts`.
 
 The conference page, chat, legacy recommendations, and meeting-recipient validation
 all use `getAttendeeRepository()`. Keep IDs stable when mapping CSV rows to the
-agreed `Attendee` contract. The demo event ID currently comes from `demoEvent` in
-`mock-data.ts`; align it with the graph seed's event ID during integration.
+agreed `Attendee` contract. `event-config.ts` selects the event using
+`ATTENDEES_EVENT_ID` for CSV data or the fixture event in explicit mock mode.
 
 The repository contract is:
 

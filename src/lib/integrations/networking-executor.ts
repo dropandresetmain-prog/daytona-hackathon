@@ -31,7 +31,9 @@ export function getNetworkingStatus() {
       model:
         process.env.QWEN_REALTIME_MODEL?.trim() ||
         "qwen3.8-omni-flash-realtime",
-      available: false,
+      available: Boolean(
+        llm.apiKey && process.env.ALIBABA_WORKSPACE_ID?.trim(),
+      ),
     },
     mode: mode as "mock" | "qwen",
     execution: execution as "local" | "daytona",
@@ -60,7 +62,7 @@ export async function executeNetworking(context: NetworkingContext): Promise<{
     );
     return {
       recommendations: ranked.slice(0, context.limit),
-      message: `I checked ${context.candidates.length} seeded attendees. Here are ${Math.min(context.limit, ranked.length)} introductions based on your goal and profile. This preview uses keyword matching.`,
+      message: `I checked ${context.candidates.length} attendee profiles. Here are ${Math.min(context.limit, ranked.length)} introductions based on your goal and profile. This preview uses keyword matching.`,
       execution: { provider: "local" },
       mode: "mock",
     };

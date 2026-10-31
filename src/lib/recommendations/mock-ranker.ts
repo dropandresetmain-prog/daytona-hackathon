@@ -54,6 +54,7 @@ export const mockRecommendationRanker: RecommendationRanker = {
             .some((word) => goalWords.has(word)),
       );
       const sameIndustry =
+        Boolean(attendee.industry.trim()) &&
         normalize(attendee.industry) === normalize(candidate.industry);
       const reasons = [
         ...needs.map(
@@ -91,8 +92,8 @@ export const mockRecommendationRanker: RecommendationRanker = {
         ],
         mutualValue: reciprocal.length
           ? `You bring ${reciprocal.join(", ")}; ${candidate.name.split(" ")[0]} brings ${offers.slice(0, 2).join(", ")}.`
-          : `Explore whether your work at ${attendee.company} connects with their work at ${candidate.company}; mutual value is not established yet.`,
-        conversationStarter: `Hi ${candidate.name.split(" ")[0]}, I noticed your work in ${candidate.industry.toLowerCase()}. I'd love to hear about ${needs[0]?.toLowerCase() ?? candidate.canOffer[0]?.toLowerCase() ?? "what you're working on"}.`,
+          : `Explore whether your work${attendee.company ? ` at ${attendee.company}` : ""} connects with their work${candidate.company ? ` at ${candidate.company}` : ""}; mutual value is not established yet.`,
+        conversationStarter: `Hi ${candidate.name.split(" ")[0]}, I'd love to hear about ${needs[0]?.toLowerCase() ?? candidate.canOffer[0]?.toLowerCase() ?? (candidate.industry ? `your work in ${candidate.industry.toLowerCase()}` : "what you're working on")}.`,
       };
     });
   },

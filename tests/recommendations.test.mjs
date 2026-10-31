@@ -37,6 +37,7 @@ before(async () => {
         NEXT_TELEMETRY_DISABLED: "1",
         NETWORKING_MODE: "mock",
         NETWORKING_EXECUTION: "local",
+        ATTENDEE_DATA_SOURCE: "mock",
         MEETING_REQUESTS_FILE: meetingStoreFile,
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -409,7 +410,7 @@ test("voice readiness and rejected offers never invoke an inference", async () =
   const response = await fetch(`${baseUrl}/api/voice/session`);
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.available, false);
+  assert.equal(body.available, body.configured);
   assert.equal(typeof body.configured, "boolean");
   const foreign = await fetch(`${baseUrl}/api/voice/session`, {
     method: "POST",

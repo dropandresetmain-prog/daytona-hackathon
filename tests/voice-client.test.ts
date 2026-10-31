@@ -11,6 +11,7 @@ const audioSdp = "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n";
 
 class FakeTrack {
   readonly kind = "audio";
+  enabled = true;
   stopped = false;
   stop() {
     this.stopped = true;
@@ -226,6 +227,10 @@ describe("browser voice connection lifecycle", { concurrency: false }, () => {
 
     assert.equal(browser.microphoneCalls, 1);
     assert.equal(browser.peer.senders[0].track, microphoneTrack);
+    connection.setMicrophoneMuted(true);
+    assert.equal(microphoneTrack.enabled, false);
+    connection.setMicrophoneMuted(false);
+    assert.equal(microphoneTrack.enabled, true);
     connection.close();
     assert.equal(microphoneTrack.stopped, true);
     assert.equal(browser.peer.connectionState, "closed");

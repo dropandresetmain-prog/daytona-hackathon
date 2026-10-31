@@ -27,7 +27,11 @@ before(async () => {
       String(port),
     ],
     {
-      env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1" },
+      env: {
+        ...process.env,
+        NEXT_TELEMETRY_DISABLED: "1",
+        RECOMMENDATION_MODE: "mock",
+      },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
     },

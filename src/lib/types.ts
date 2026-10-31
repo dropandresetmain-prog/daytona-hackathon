@@ -39,6 +39,6 @@ export interface RecommendationResponse {
   attendeeId: string;
   eventId: string;
   goal: string;
-  mode: "mock";
+  mode: "mock" | "daytona";
   recommendations: Recommendation[];
 }

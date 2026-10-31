@@ -1,13 +1,21 @@
-import type {
-  RecommendationRequest,
-  RecommendationResponse,
-} from "@/lib/types";
+import { daytonaRecommendationRanker } from "@/lib/integrations/daytona";
 import type {
   AttendeeRepository,
   RecommendationRanker,
 } from "@/lib/integrations/contracts";
 import { mockAttendeeRepository } from "@/lib/integrations/mock-repository";
+import type {
+  RecommendationRequest,
+  RecommendationResponse,
+} from "@/lib/types";
 import { mockRecommendationRanker } from "./mock-ranker";
+import { recommendationMode } from "./mode";
+
+function defaultRanker(): RecommendationRanker {
+  return recommendationMode() === "daytona"
+    ? daytonaRecommendationRanker
+    : mockRecommendationRanker;
+}
 
 export class AttendeeNotFoundError extends Error {}
 
@@ -15,7 +23,7 @@ export class AttendeeNotFoundError extends Error {}
 export async function getRecommendations(
   request: RecommendationRequest,
   repository: AttendeeRepository = mockAttendeeRepository,
-  ranker: RecommendationRanker = mockRecommendationRanker,
+  ranker: RecommendationRanker = defaultRanker(),
 ): Promise<RecommendationResponse> {
   const attendee = await repository.getById(request.attendeeId);
   if (!attendee) throw new AttendeeNotFoundError("Attendee not found.");
@@ -37,7 +45,7 @@ export async function getRecommendations(
     attendeeId: attendee.id,
     eventId: attendee.eventId,
     goal: request.goal,
-    mode: "mock",
+    mode: ranker === daytonaRecommendationRanker ? "daytona" : "mock",
     recommendations: ranked
       .slice(0, request.limit)
       .map((result, index) => ({ ...result, rank: index + 1 })),

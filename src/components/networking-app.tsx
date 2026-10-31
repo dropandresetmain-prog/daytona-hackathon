@@ -1,15 +1,17 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from "react";
 import Link from "next/link";
 import type { AttendeeProfile, RecommendationResponse } from "@/lib/types";
 
 interface Props {
   event: { name: string; description: string };
   attendees: AttendeeProfile[];
+  matcher: "daytona" | "local";
 }
 
-export function NetworkingApp({ event, attendees }: Props) {
+export function NetworkingApp({ event, attendees, matcher }: Props) {
+  const inSandbox = matcher === "daytona";
   const [attendeeId, setAttendeeId] = useState(attendees[0]?.id ?? "");
   const [goal, setGoal] = useState(
     "Find funding and partnerships for a climate tech startup.",
@@ -18,7 +20,6 @@ export function NetworkingApp({ event, attendees }: Props) {
   const [result, setResult] = useState<RecommendationResponse | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  // Ignore in-flight responses after the user changes the profile or goal.
   const requestVersion = useRef(0);
   const selected = attendees.find((attendee) => attendee.id === attendeeId);
 
@@ -29,8 +30,8 @@ export function NetworkingApp({ event, attendees }: Props) {
     setLoading(false);
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submit(formEvent: FormEvent<HTMLFormElement>) {
+    formEvent.preventDefault();
     const version = ++requestVersion.current;
     setLoading(true);
     setError("");
@@ -46,11 +47,11 @@ export function NetworkingApp({ event, attendees }: Props) {
         throw new Error(body.error ?? "Could not find recommendations.");
       if (version === requestVersion.current)
         setResult(body as RecommendationResponse);
-    } catch (error) {
+    } catch (caught) {
       if (version === requestVersion.current) {
         setError(
-          error instanceof Error
-            ? error.message
+          caught instanceof Error
+            ? caught.message
             : "Something went wrong. Try again.",
         );
       }
@@ -60,261 +61,248 @@ export function NetworkingApp({ event, attendees }: Props) {
   }
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        <Link className="brand" href="/" aria-label="Common Ground home">
-          <span className="brand-icon" aria-hidden="true">
-            ↗
-          </span>{" "}
-          common ground<span className="brand-dot">.</span>
-        </Link>
-        <span className="demo-badge">
-          <span aria-hidden="true" /> Mock demo · No external calls
-        </span>
-      </header>
-      <main>
-        <section className="intro">
-          <p className="eyebrow">GOOD PEOPLE. BETTER CONVERSATIONS.</p>
-          <h1>
-            Find your next
-            <br />
-            <span>common ground.</span>
-          </h1>
-          <p className="intro-copy">
-            Skip the room full of strangers. Find people whose goals and skills
-            connect with yours, and a reason to say hello.
-          </p>
-          <div className="event-line">
-            <span className="event-icon" aria-hidden="true">
-              ◎
-            </span>
-            <span>
+    <div className="night">
+      <div className="aurora" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className="shell">
+        <header className="topbar">
+          <Link className="brand" href="/" aria-label="Common Ground home">
+            common ground
+          </Link>
+          <span className="pill">
+            <span className="live" aria-hidden="true" />
+            {inSandbox ? "Daytona sandbox" : "On this machine"}
+          </span>
+        </header>
+        <main>
+          <section className="hero">
+            <h1>
+              Find your next
+              <br />
+              common ground
+            </h1>
+            <p className="lede">
+              {event.description} Tell us who you are and what you want from
+              the room.
+            </p>
+            <p className="meta">
               <strong>{event.name}</strong>
-              <small>
-                {attendees.length} fictional profiles · Local matching
-              </small>
-            </span>
-          </div>
-        </section>
+              <span>
+                {attendees.length} fictional profiles
+                {inSandbox ? ", ranked in Daytona" : ", matched locally"}
+              </span>
+            </p>
+          </section>
 
-        <div className="workspace">
-          <aside className="profile-panel">
-            <div className="section-heading">
-              <span className="step">01</span>
-              <h2>Start with you</h2>
-            </div>
-            <form onSubmit={submit}>
-              <label htmlFor="attendee">Your demo profile</label>
-              <select
-                id="attendee"
-                value={attendeeId}
-                onChange={(event) => {
-                  setAttendeeId(event.target.value);
-                  clearResults();
-                }}
-              >
-                {attendees.map((attendee) => (
-                  <option key={attendee.id} value={attendee.id}>
-                    {attendee.name} · {attendee.company}
-                  </option>
-                ))}
-              </select>
-              {selected && (
-                <div className="profile-preview">
-                  <div className="profile-person">
+          <div className="workspace">
+            <aside className="ticket">
+              <form onSubmit={submit}>
+                <label htmlFor="attendee">You are</label>
+                <select
+                  id="attendee"
+                  value={attendeeId}
+                  onChange={(change) => {
+                    setAttendeeId(change.target.value);
+                    clearResults();
+                  }}
+                >
+                  {attendees.map((attendee) => (
+                    <option key={attendee.id} value={attendee.id}>
+                      {attendee.name}, {attendee.company}
+                    </option>
+                  ))}
+                </select>
+                {selected && (
+                  <div className="you">
                     <span className="avatar">{initials(selected.name)}</span>
                     <div>
                       <strong>{selected.name}</strong>
                       <p>
-                        {selected.position} · {selected.company}
+                        {selected.position}, {selected.company}
                       </p>
                     </div>
+                    <p className="bio">{selected.bio}</p>
+                    <div className="chips">
+                      {selected.lookingFor.map((item) => (
+                        <span key={item}>{item}</span>
+                      ))}
+                    </div>
                   </div>
-                  <p className="bio">{selected.bio}</p>
-                  <p className="tag-label">LOOKING FOR</p>
-                  <div className="tags">
-                    {selected.lookingFor.map((item) => (
-                      <span key={item}>{item}</span>
-                    ))}
-                  </div>
-                  <p className="tag-label">CAN OFFER</p>
-                  <div className="tags offer">
-                    {selected.canOffer.map((item) => (
-                      <span key={item}>{item}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <label htmlFor="goal">
-                What would make this event worthwhile?
-              </label>
-              <textarea
-                id="goal"
-                value={goal}
-                onChange={(event) => {
-                  setGoal(event.target.value);
-                  clearResults();
-                }}
-                rows={3}
-                required
-                maxLength={500}
-                placeholder="e.g. Meet a designer for my next product"
-                aria-describedby="goal-hint"
-              />
-              <p id="goal-hint" className="field-hint">
-                Be specific. This demo matches literal keywords and profile
-                tags.
-              </p>
-              <div className="limit-row">
-                <label htmlFor="limit">People to meet</label>
-                <select
-                  id="limit"
-                  value={limit}
-                  onChange={(event) => {
-                    setLimit(Number(event.target.value));
+                )}
+                <label htmlFor="goal">What would make this event worthwhile?</label>
+                <textarea
+                  id="goal"
+                  value={goal}
+                  onChange={(change) => {
+                    setGoal(change.target.value);
                     clearResults();
                   }}
-                >
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                className="primary-button"
-                type="submit"
-                disabled={loading || !goal.trim() || !selected}
-              >
-                {loading ? "Finding common ground…" : "Find my connections"}
-                <span aria-hidden="true">↗</span>
-              </button>
-            </form>
-            <p className="privacy-note">
-              Fictional profiles. Nothing is saved or sent to an external
-              service.
-            </p>
-          </aside>
-
-          <section
-            className="results-panel"
-            aria-labelledby="results-title"
-            aria-busy={loading}
-          >
-            <div className="results-heading">
-              <div>
-                <div className="section-heading">
-                  <span className="step">02</span>
-                  <h2 id="results-title">People worth a hello</h2>
-                </div>
-                <p>Why you connect, and where to begin.</p>
-              </div>
-              {result && (
-                <span className="result-count">
-                  {result.recommendations.length} connections
-                </span>
-              )}
-            </div>
-            <div role="status" aria-live="polite" className="sr-only">
-              {loading
-                ? "Finding connections."
-                : result
-                  ? `${result.recommendations.length} recommendations ready.`
-                  : ""}
-            </div>
-            {error && (
-              <div className="error" role="alert">
-                {error} Edit your goal or try again.
-              </div>
-            )}
-            {loading && (
-              <div className="empty-state">
-                <span className="empty-symbol pulse" aria-hidden="true">
-                  ✳
-                </span>
-                <h3>Looking for an overlap…</h3>
-                <p>Comparing goals, offers, and interests.</p>
-              </div>
-            )}
-            {!loading && !result && !error && (
-              <div className="empty-state">
-                <div className="orbit" aria-hidden="true">
-                  <span>AC</span>
-                  <span>MT</span>
-                  <span>JL</span>
-                </div>
-                <h3>Your next conversation starts here.</h3>
-                <p>
-                  Pick a profile, tell us your goal, and discover a few people
-                  to meet.
+                  rows={3}
+                  required
+                  maxLength={500}
+                  placeholder="Meet a designer for my next product"
+                  aria-describedby="goal-hint"
+                />
+                <p id="goal-hint" className="hint">
+                  Be specific. This matches the words you write against profile
+                  tags.
                 </p>
-                <span className="empty-caption">
-                  A LITTLE INTENTION GOES A LONG WAY
-                </span>
-              </div>
-            )}
-            {result && result.recommendations.length === 0 && (
-              <div className="empty-state">
-                <h3>No other attendees yet.</h3>
-                <p>Add more profiles to this event to find connections.</p>
-              </div>
-            )}
-            {result && (
-              <div className="recommendations">
-                {result.recommendations.map((recommendation) => (
-                  <article
-                    className="recommendation-card"
-                    key={recommendation.attendee.id}
+                <div className="limit-row">
+                  <label htmlFor="limit">People to meet</label>
+                  <select
+                    id="limit"
+                    value={limit}
+                    onChange={(change) => {
+                      setLimit(Number(change.target.value));
+                      clearResults();
+                    }}
                   >
-                    <div className="card-top">
-                      <span className="avatar">
-                        {initials(recommendation.attendee.name)}
-                      </span>
-                      <div className="person-info">
-                        <h3>{recommendation.attendee.name}</h3>
-                        <p>
-                          {recommendation.attendee.position} ·{" "}
-                          {recommendation.attendee.company}
-                        </p>
-                      </div>
-                      <span className="rank">#{recommendation.rank}</span>
-                    </div>
-                    <div className="score-row">
-                      <span>{recommendation.attendee.industry}</span>
-                      <span>
-                        {recommendation.score}/100 <small>mock relevance</small>
-                      </span>
-                    </div>
-                    <h4>Why connect</h4>
-                    <ul className="reasons">
-                      {recommendation.reasons.map((reason) => (
-                        <li key={reason}>{reason}</li>
-                      ))}
-                    </ul>
-                    <p className="mutual-value">
-                      <strong>A two-way conversation</strong>
-                      {recommendation.mutualValue}
-                    </p>
-                    <div className="icebreaker">
-                      <span className="tag-label">BREAK THE ICE</span>
-                      <p>“{recommendation.conversationStarter}”</p>
-                    </div>
-                  </article>
-                ))}
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  className="go"
+                  type="submit"
+                  disabled={loading || !goal.trim() || !selected}
+                >
+                  {loading
+                    ? inSandbox
+                      ? "Running in Daytona…"
+                      : "Finding common ground…"
+                    : "Find my connections"}
+                </button>
+              </form>
+              <p className="fine">
+                {inSandbox
+                  ? "Fictional profiles. Matching runs in a Daytona sandbox. Email and phone stay on this server."
+                  : "Fictional profiles. Matching stays on this machine. Nothing is saved."}
+              </p>
+            </aside>
+
+            <section className="guestlist" aria-labelledby="results-title" aria-busy={loading}>
+              <div className="guestlist-head">
+                <h2 id="results-title">People worth a hello</h2>
+                {result && (
+                  <span className="pill quiet">
+                    {result.recommendations.length} connections
+                  </span>
+                )}
               </div>
-            )}
-          </section>
-        </div>
-      </main>
-      <footer>
-        <span>common ground.</span>
-        <p>
-          Built for a useful first conversation. All profiles and results are
-          fictional demo data.
-        </p>
-      </footer>
+              <div role="status" aria-live="polite" className="sr-only">
+                {loading
+                  ? inSandbox
+                    ? "Running the match in a Daytona sandbox."
+                    : "Finding connections."
+                  : result
+                    ? `${result.recommendations.length} recommendations ready.`
+                    : ""}
+              </div>
+              {error && (
+                <div className="error" role="alert">
+                  {error} Edit your goal or try again.
+                </div>
+              )}
+              {loading && (
+                <div className="waiting">
+                  <h3>
+                    {inSandbox ? "Running the match in Daytona" : "Looking for an overlap"}
+                  </h3>
+                  <p>
+                    {inSandbox
+                      ? "The ranker is executing on elastic compute. The first request can take a minute while the sandbox starts."
+                      : "Comparing goals, offers, and interests."}
+                  </p>
+                </div>
+              )}
+              {!loading && !result && !error && (
+                <div className="waiting">
+                  <div className="faces" aria-hidden="true">
+                    <span>AC</span>
+                    <span>MT</span>
+                    <span>JL</span>
+                  </div>
+                  <h3>Your next conversation starts here.</h3>
+                  <p>Pick a profile, tell us your goal, and discover a few people to meet.</p>
+                </div>
+              )}
+              {result && result.recommendations.length === 0 && (
+                <div className="waiting">
+                  <h3>No other attendees yet.</h3>
+                  <p>Add more profiles to this event to find connections.</p>
+                </div>
+              )}
+              {result && result.recommendations.length > 0 && (
+                <div className="guests">
+                  {result.recommendations.map((recommendation) => (
+                    <Spotlight key={recommendation.attendee.id}>
+                      <div className="guest-top">
+                        <span className="avatar">
+                          {initials(recommendation.attendee.name)}
+                        </span>
+                        <div>
+                          <h3>{recommendation.attendee.name}</h3>
+                          <p>
+                            {recommendation.attendee.position},{" "}
+                            {recommendation.attendee.company}
+                          </p>
+                        </div>
+                        <span className="rank">{recommendation.rank}</span>
+                      </div>
+                      <p className="scoreline">
+                        <span>{recommendation.attendee.industry}</span>
+                        <span>
+                          {recommendation.score}/100{" "}
+                          <small>
+                            {result.mode === "daytona" ? "sandbox score" : "local score"}
+                          </small>
+                        </span>
+                      </p>
+                      <h4>Why connect</h4>
+                      <ul>
+                        {recommendation.reasons.map((reason) => (
+                          <li key={reason}>{reason}</li>
+                        ))}
+                      </ul>
+                      <p className="mutual">{recommendation.mutualValue}</p>
+                      <blockquote>{recommendation.conversationStarter}</blockquote>
+                    </Spotlight>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        </main>
+        <footer>
+          <span>common ground</span>
+          <p>Built for a useful first conversation. All profiles and results are fictional.</p>
+        </footer>
+      </div>
     </div>
+  );
+}
+
+function Spotlight({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+
+  function move(event: PointerEvent<HTMLElement>) {
+    const node = ref.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    node.style.setProperty("--x", `${event.clientX - rect.left}px`);
+    node.style.setProperty("--y", `${event.clientY - rect.top}px`);
+  }
+
+  return (
+    <article ref={ref} className="spotlight" onPointerMove={move}>
+      {children}
+    </article>
   );
 }
 

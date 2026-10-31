@@ -6,6 +6,7 @@ import {
 import { parseRecommendationRequest } from "@/lib/recommendations/validation";
 
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
 export async function POST(request: Request) {
   if (

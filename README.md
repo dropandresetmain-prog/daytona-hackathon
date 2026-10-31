@@ -1,99 +1,123 @@
 # Common Ground
 
-Next.js + TypeScript conference networking demo. The default dataset is the supplied
-SWITCH CSV: 40 profiles marked Synthetic. The original 100 fictional fixtures are
-available with `ATTENDEE_DATA_SOURCE=mock`. No registration or profile editing.
+**Find five people worth meeting, understand why, and start the conversation.**
 
-## Demo
+Common Ground is a conference networking assistant built as a Daytona hackathon
+prototype. Tell it what you want to get out of an event, by text or optional voice,
+and it recommends connections from the event's attendee list.
 
-1. Open the chatbot from the conference page.
-2. Ask **Who should I connect with at this conference?**
-3. The engine considers the other 39 CSV attendees and returns five recommendations.
-4. Open a recommendation, review its reasons, and send a demo meeting request.
-5. The request is saved in a local demo inbox. No email or real notification is sent.
+## The problem
 
-The UI incorporates PR #1's dark visual design, with chatbot, meeting requests,
-and optional voice wired to our existing backend. PR #1's alternate Daytona
-ranker is excluded. See [integration decisions](docs/pr1-integration.md) and
-[UI contracts](docs/frontend-integration.md).
+Conference attendees have limited time and a long list of people they could meet.
+An attendee directory can tell you someone's name and company, but it still leaves
+you to work out who fits your goals, what you could offer each other, and how to
+start a useful conversation.
 
-## Run
+Common Ground helps attendees move from browsing a list to making an introduction
+with a clear reason behind it.
 
-Requires Node.js 22.13+ and npm (Node.js 24 recommended).
+## The solution
 
-```powershell
+1. **Say what you need.** Ask who to meet, or describe a goal such as finding
+   technical collaborators, mentors, or partners.
+2. **See five suggested connections.** The assistant considers every other profile
+   at the event and returns a ranked shortlist with reasons, possible mutual value,
+   and a conversation starter.
+3. **Take the next step.** Open a profile, edit the suggested introduction, and
+   save a request to meet in the demo inbox.
+
+The matching guidance favors complementary needs and contributions. Shared skills
+or industry can help, but the assistant should explain what makes a conversation
+useful and acknowledge when the evidence is limited. Scores express relative
+relevance to the request; they are not probabilities or measures of a person.
+
+## Try the demo
+
+With the app running, open [localhost:3000](http://localhost:3000).
+
+1. Select a seeded attendee under **You are**. The supplied CSV contains **40
+   synthetic profiles**; no registration or profile editing is needed.
+2. Click **Find my connections** to open the assistant.
+3. Ask **“Who should I connect with at this conference?”** The engine considers
+   the other 39 profiles and returns five recommendations.
+4. Try a refinement: **“Prioritize people who know Python and want to collaborate
+   on projects.”**
+5. Open a card, review the explanation, edit **Start with a hello**, and click
+   **Send request to meet**. The request stays in the local demo inbox; no message
+   or notification is delivered to a real person.
+6. Optional: click **Start voice**, allow microphone access, and ask your question
+   aloud. Voice uses the same recommendation engine. Use **End voice** to stop.
+
+Use **Reset Demo** between scenarios. It stops voice, clears the conversation and
+recommendations, restores the default persona, and clears the shared demo meeting
+inbox for all personas.
+
+For a suggested pitch, walkthrough, and judge questions, see the
+[demo guide](docs/demo-guide.md).
+
+## How it works
+
+```mermaid
+flowchart LR
+    UI[Text chat] --> App[Next.js server]
+    CSV[Attendee CSV] --> App
+    Skill[Networking SKILL.md] --> App
+    App --> Sandbox[Temporary Daytona sandbox]
+    Sandbox --> Qwen[Qwen text inference]
+    Qwen --> Sandbox
+    Sandbox --> Validate[Server validates results]
+    Validate --> Cards[Five connection cards]
+    Voice[Qwen Omni voice] -->|Recommendation tool via app| App
+    Cards --> Meeting[Local demo meeting inbox]
+```
+
+**Daytona runs the recommendation inference request.** For each live chat request,
+the app creates a temporary sandbox. A fixed Python runner calls Qwen with the
+attendee profiles, goal, conversation context, and networking guidance. The server
+checks the results against the supplied attendee IDs before returning cards, and
+attempts to delete the sandbox after execution. Idle-stop and TTL settings bound
+abandoned sandboxes. User and model text are never executed as code.
+
+CSV loading, result validation, and meeting storage run in the Next.js app. Voice
+connects to Qwen Omni through a server-side handshake; its recommendation tool
+calls the same chat backend. Voice cannot send meeting requests.
+
+## Run locally
+
+Requires **Node.js 22.13+** and npm; Node.js 24 is recommended for this project.
+
+```sh
 npm ci
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). The selected CSV persona defaults
-to the first row. Without provider credentials, recommendations use visibly labeled local
-keyword matching. Profile selection is a demo identity switch, not authentication.
+Open [localhost:3000](http://localhost:3000). With no provider credentials, text
+recommendations run locally using labeled keyword matching. The supplied CSV is
+loaded automatically. This is enough to explore the UI and meeting workflow.
 
-On this Windows machine the global npm launcher may fail. Use the bundled CLI:
+For **Qwen + Daytona execution and optional voice**, follow the
+[setup guide](docs/setup.md). If credentials are already present, the app selects
+live execution automatically; the guide also explains how to force offline mode.
+Keep credentials in `.env.local`; never commit them.
 
-```powershell
-& 'C:\Program Files\nodejs\node.exe' 'C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js' run dev
-```
+## Demo status and limits
 
-## Qwen and Daytona
+| Area                 | Current behavior                                                                                                                                                                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data                 | 40 profiles marked Synthetic in the supplied SWITCH export. An optional fixture set has 100 fictional profiles. No real attendance or identity is verified.                                                                                    |
+| Text recommendations | Live Qwen inference inside Daytona and the CSV-to-five-card browser flow have been verified locally. Offline keyword matching is also available.                                                                                               |
+| Voice                | Connection, tool calls into the recommendation engine, result continuation, mute, and cleanup have been verified using a text-injected turn and simulated media. Real microphone transcription and audible playback still need a manual check. |
+| Meeting requests     | Saved and deduplicated in a local file. No delivery, scheduling, or acceptance flow. Reset Demo clears the shared inbox.                                                                                                                       |
+| Identity and memory  | Persona selection is a demo control, without authentication. Conversation context is bounded client history; no persistent context store or Neo4j connection is required.                                                                      |
+| Matching quality     | Explanations use supplied profile evidence. There is no measured matching accuracy, calibrated confidence, or guarantee of meeting availability. Five results may include exploratory matches.                                                 |
 
-Copy `.env.example` to `.env.local` only if `.env.local` does not already exist.
-Keep all credentials server-side and never commit `.env.local`.
+These checks describe the local prototype, not a production deployment. Missing
+profile details remain empty. Email and phone fields are excluded from browser
+profiles and recommendation-model payloads.
 
-- `ALIBABA_CLOUD_API_KEY`: Alibaba Model Studio API key (`LLM_API_KEY` alias supported).
-- `LLM_MODEL`: defaults to `qwen3.8-flash`.
-- `ALIBABA_REGION`: `ap-southeast-1` or `cn-beijing`; must match the key.
-- `ALIBABA_WORKSPACE_ID`: workspace ID for the voice endpoint; text retains its verified regional endpoint.
-- `DAYTONA_API_KEY`: sandbox creation/deletion permissions required.
-- `DAYTONA_TARGET`: optional Daytona execution target.
-- `NETWORKING_MODE`: `qwen` or `mock`; defaults to `qwen` when a model key exists.
-- `NETWORKING_EXECUTION`: `daytona` or `local`; defaults to `daytona` when its key exists.
+## Development and documentation
 
-With both keys configured, each chat request creates a temporary Daytona sandbox.
-A fixed Python runner sends the complete candidate set and goal to Qwen from
-inside the sandbox. The app validates the returned IDs, uses canonical repository
-profiles, and deletes the sandbox in a `finally` block. An idle stop, automatic
-deletion, and sandbox TTL also constrain abandoned executions. User/model content
-is never executed as code.
-
-Configured provider failures surface as errors. They do not silently return mock
-results. To deliberately run offline, set **both** switches:
-
-```dotenv
-NETWORKING_MODE=mock
-NETWORKING_EXECUTION=local
-```
-
-`GET /api/status` reports selected mode and configuration readiness, never keys.
-Readiness indicates configuration, not a guarantee that credentials/quota work.
-
-The operator-only live check makes one real model request inside Daytona:
-
-```powershell
-npm run check:providers
-```
-
-Real-time voice is optional. **Start voice** requests microphone permission and
-connects Qwen Omni; controls show call state, mute, transcripts, and audio playback.
-Its read-only recommendation tool calls the same `/api/chat` engine. Meeting
-requests still require selecting a card and explicitly submitting the form.
-Closing the assistant or switching persona stops microphone tracks. The long-lived
-Alibaba key stays on the server. Availability means configured, not verified quota.
-
-Local CSV configuration and column mapping: [docs/csv-integration.md](docs/csv-integration.md).
-The checked-in dataset is synthetic demo data; no attendance or identity is verified.
-
-Verified locally on 31 October 2026: CSV chat returned five Qwen recommendations
-through Daytona, and a demo meeting request saved successfully. Omni accepted the
-session/tool configuration and called the same engine, then continued its response
-after receiving the five results. This voice check used a text-injected turn and
-silent simulated media. Real microphone transcription and audible playback still
-require a manual browser check.
-
-## Checks
-
-```powershell
+```sh
 npm run lint
 npm run typecheck
 npm run test:unit
@@ -101,33 +125,14 @@ npm run build
 npm run test:smoke
 ```
 
-Unit tests cover canonical model output, event isolation, context, CSV parsing,
-the supplied dataset, voice protocol, lifecycle cleanup, and validation.
-Smoke tests start a production server with **forced offline execution**, use an
-isolated meeting store, and check chat/API errors, persistence, concurrent duplicate
-requests, and corrupt-store handling. They do not make paid provider calls.
+Automated tests use offline execution. The separate `npm run check:providers`
+command makes a real inference request and can incur provider charges.
 
-## Integration boundaries
-
-- `src/lib/types.ts`: agreed Attendee contract and recommendation/chat types.
-- `src/lib/integrations/contracts.ts`: repository and ranking interfaces.
-- `src/lib/integrations/data-sources.ts`: central attendee and conversation-context bindings.
-- `src/lib/integrations/csv-repository.ts`: validated CSV ingestion, no Neo4j required.
-- `data/attendees.csv`: supplied 40-profile synthetic SWITCH export.
-- `src/lib/mock-data.ts`: 100 fictional fixtures; no private contact data.
-- `src/lib/chat/service.ts`: retrieval, goal context, execution, canonical results.
-- `src/lib/integrations/networking-executor.ts`: explicit offline/Qwen/Daytona wiring.
-- `src/lib/integrations/neo4j.ts`: unused placeholder; no graph connection is required.
-- `skills/networking/SKILL.md`: completed teammate guidance, read per Qwen request.
-- `src/components/use-networking-voice.ts`: voice controls and recommendation tool orchestration.
-- `src/lib/meetings/`: validates and saves demo requests separately from recommendations.
-
-Meeting data lives in ignored `.data/meeting-requests.json` by default. Override
-`MEETING_REQUESTS_FILE` for a separate demo/test store. Repeated requests from the
-same sender to the same attendee/event return the original request. The file store
-supports one Node process; use a database with a unique constraint before running
-multiple instances. Authentication and real message delivery are outside this demo.
-
-Conversation history remains bounded in the browser. The optional context-store
-interface remains available; no graph queries or persisted conversation store are
-implemented. [docs/neo4j-integration.md](docs/neo4j-integration.md) documents that optional seam.
+- [Setup and troubleshooting](docs/setup.md)
+- [Judge demo guide](docs/demo-guide.md)
+- [CSV configuration and column mapping](docs/csv-integration.md)
+- [Frontend and API contracts](docs/frontend-integration.md)
+- [Networking guidance and matching limits](docs/networking-matching-plan.md)
+- [Optional context-store contract](docs/neo4j-integration.md)
+- [UI integration history](docs/pr1-integration.md)
+- [Dataset notes](data/README.md)

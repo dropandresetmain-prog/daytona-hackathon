@@ -1,4 +1,4 @@
-# Final UI integration
+# Frontend and API contracts
 
 `src/components/networking-app.tsx` now combines PR #1's visual design with our
 chatbot, meeting request, and voice flows. The backend does not depend on its
@@ -9,8 +9,8 @@ layout. `src/app/page.tsx` passes:
 ```
 
 Import shared types from `@/lib/types` and `@/lib/meeting-types`. The page uses
-`publicProfile` before passing fixtures to the browser. Preserve that boundary
-when switching to the teammate's repository; email/phone are not client props.
+`publicProfile` before passing profiles to the browser. Preserve that boundary
+when changing the repository; email/phone are not client props.
 The supplied CSV has 40 profiles marked Synthetic. Its first row is the default
 persona. Explicit mock mode uses 100 fictional fixtures and defaults to `alex`.
 
@@ -20,12 +20,15 @@ persona. Explicit mock mode uses 100 fictional fixtures and defaults to `alex`.
 
 ```json
 {
-  "attendeeId": "alex",
+  "attendeeId": "A001",
   "message": "Who should I connect with at this conference?",
   "history": [],
   "sessionId": "a-browser-generated-conversation-uuid"
 }
 ```
+
+Examples use IDs from the default CSV. With `ATTENDEE_DATA_SOURCE=mock`, use
+fixture IDs such as `alex` and `maya` instead.
 
 History contains previous `{ "role": "user" | "assistant", "content": "..." }`
 records, excluding the new message. Send at most the last ten messages. Each
@@ -47,7 +50,7 @@ The response is `ChatResponse`:
   mode: "mock" | "qwen";
   execution: { provider: "local" | "daytona"; model?: string; sandboxId?: string };
   warning?: string;
-  recommendations: Recommendation[]; // five, unique, sorted; rank begins at 1
+  recommendations: Recommendation[]; // up to five, unique, sorted; rank begins at 1
 }
 ```
 
@@ -66,8 +69,8 @@ Show loading/retry, and discard stale responses after switching personas.
 
 ```json
 {
-  "attendeeId": "alex",
-  "recipientId": "maya",
+  "attendeeId": "A001",
+  "recipientId": "A002",
   "message": "Would you like to meet after the session?"
 }
 ```
@@ -93,8 +96,16 @@ Message is 1–1000 characters. Response:
 201 means created; 200 means the same sender/recipient/event already has a request.
 Keep the original request when `duplicate` is true. Display **Request saved in demo
 inbox**, rather than claiming real delivery or acceptance. Refresh outgoing state
-with `GET /api/meeting-requests?attendeeId=alex` → `{requests: MeetingRequest[], mode:"demo"}`.
+with `GET /api/meeting-requests?attendeeId=A001` → `{requests: MeetingRequest[], mode:"demo"}`.
 The endpoint lists outgoing requests only; it is not an authenticated inbox.
+
+### Reset Demo
+
+`DELETE /api/meeting-requests` clears the entire shared demo inbox and returns
+`{ok:true, mode:"demo"}`. It is not scoped to a persona. The UI's **Reset Demo**
+button also stops voice, clears its conversation and cards, and restores the
+default persona. This endpoint has no authentication and belongs to the local
+demo; do not treat it as a production account or inbox API.
 
 ## Readiness and optional voice
 
@@ -150,7 +161,7 @@ when changing persona, closing the assistant, or unmounting the UI.
 Errors use `{error:string}`. Chat: 400 invalid input/JSON, 404 missing persona,
 413 oversized body, 415 media type, 502 execution failure. Meeting requests add
 409 cross-event and 503 unavailable storage. Status can return 503 for invalid
-configuration. Unsupported methods return 405.
+configuration. Other unsupported methods return 405.
 
 Legacy `POST /api/recommendations` remains an offline deterministic endpoint with
 `{attendeeId,goal,limit}`; use `/api/chat` for the live Qwen/Daytona demo workflow.

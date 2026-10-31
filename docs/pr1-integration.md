@@ -1,7 +1,9 @@
 # PR #1 integration decisions
 
-Reviewed head `48b77f3` from `dev_zihao`. The visual design is ported onto the
-existing backend on `codex/demo-ui-integration`; PR #1 is not merged wholesale.
+Historical integration note: reviewed head `48b77f3` from `dev_zihao`. The visual
+design was ported onto the existing backend through `codex/demo-ui-integration`,
+then integrated into main in `b974e3e`. PR #1's alternate backend was excluded.
+For the current demo and setup, start with the [README](../README.md).
 
 | Decision                                                   | Classification       | Reason and consequence                                                                                                                                |
 | ---------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |

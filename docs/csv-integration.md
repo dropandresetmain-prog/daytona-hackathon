@@ -1,10 +1,16 @@
 # Attendee CSV integration
 
-The attendee repository accepts a server-only UTF-8 CSV without Neo4j. The chatbot, recommendation and meeting APIs keep their existing contracts. Conversation context continues to use bounded client history; this adapter does not persist context.
+The app automatically loads `data/attendees.csv`: the supplied SWITCH export with
+40 synthetic profiles. No database or import command is required. The chatbot,
+recommendations, and meeting APIs all use the same repository. Conversation history
+is separate and stays bounded in the browser.
 
-For the simulated local demo, set `ATTENDEE_DATA_SOURCE=mock`. This selects the 100 fictional seeded profiles even if a CSV or credentials are present. LLM mode and execution settings are independent.
+To use the alternative fixture dataset, set `ATTENDEE_DATA_SOURCE=mock`. This
+selects 100 fictional profiles even when a CSV is present. It changes the data,
+not the inference provider; see [offline execution](setup.md#run-offline-deliberately).
 
-To use the teammate export, add these values to the ignored `.env.local`, then restart Next.js:
+To select a CSV explicitly, add these values to the ignored `.env.local`, then
+restart Next.js. Change the path to use a different export:
 
 ```dotenv
 ATTENDEE_DATA_SOURCE=csv
@@ -49,4 +55,7 @@ Provided attendee IDs must be globally unique, nonempty and at most 100 characte
 
 The file limit is 5 MB and 10,000 attendees; individual fields are limited to 10,000 characters and lists to 100 entries. Malformed files fail as a whole with a sanitized error; no complete CSV record or contact value is logged. Phone numbers remain strings, including leading zeros. Existing public-profile projection removes email and phone before browser and LLM payloads. CSV data has no implied verification or fictional status. CSV contact values stay server-side; separately review freeform bio content before supplying it if it contains private details.
 
-Run `npx tsx --test tests/csv-repository.test.ts` for parser, event isolation, source selection and missing-file checks. Existing mock smoke tests must set `ATTENDEE_DATA_SOURCE=mock` alongside `NETWORKING_MODE=mock` and `NETWORKING_EXECUTION=local` so they stay deterministic when the export arrives.
+Run `npm run test:unit` for CSV parsing, the supplied dataset's five-match flow,
+event isolation, source selection, and missing-file checks, along with the engine
+and voice unit tests. The smoke suite explicitly selects mock fixtures and local
+execution, so its results stay deterministic while the CSV is installed.

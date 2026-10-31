@@ -61,15 +61,15 @@ recommendation response. Rejected provider output must not enter graph memory.
 
 With `contextStore = null`, the current demo uses bounded client conversation
 history. `ChatResponse.memory` is `client`; with the adapter it is `context-store`.
-The placeholder creates a browser UUID per conversation and regenerates it on a
+The UI creates a browser UUID per conversation and regenerates it on a
 persona switch. Session IDs provide scoping, not authentication.
 
-## Other lanes
+## Related components
 
-- The final UI can consume the APIs in `frontend-integration.md` without importing
+- The UI consumes the APIs in `frontend-integration.md` without importing
   provider or Neo4j code into client components.
-- The skill owner can replace `skills/networking/SKILL.md`. Qwen mode reads its
-  guidance at request time; this branch leaves the placeholder untouched.
+- `skills/networking/SKILL.md` contains the completed matching guidance. Qwen mode
+  reads it at request time; offline matching does not use it.
 - Qwen inference runs inside Daytona when configured. Graph/context retrieval and
   canonical response validation currently run in the Next.js server.
 - Meeting requests currently persist in an ignored single-process JSON demo store.
@@ -83,6 +83,6 @@ test repositories/context stores; the opt-in `check:providers` makes a real call
 Existing context tests demonstrate scope, authoritative history, atomic exchange
 callbacks, and failure propagation using an injected adapter.
 
-Do not add registration, profile editing, auth, real messaging, or a new graph
-schema as part of the merge. Preserve configured-provider failure behavior and
-the final UI lane's ownership.
+Any future database integration should preserve the existing API contracts and
+configured-provider failure behavior. Registration, profile editing,
+authentication, and real messaging are separate product work.

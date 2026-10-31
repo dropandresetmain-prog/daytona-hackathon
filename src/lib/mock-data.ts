@@ -7,7 +7,7 @@ export const demoEvent = {
 };
 
 // Entirely fictional fixtures. No real attendees, companies, or contact details.
-export const mockAttendees: Attendee[] = [
+const originalAttendees: Attendee[] = [
   {
     id: "alex",
     eventId: demoEvent.id,
@@ -86,4 +86,160 @@ export const mockAttendees: Attendee[] = [
     bio: "Bringing independent builders together to exchange feedback and learn in public.",
     interests: ["Open source", "AI"],
   },
+];
+
+// Repeatable fictional fixtures let the demo search a realistic-sized room.
+const archetypes = [
+  {
+    industry: "Venture capital",
+    position: "Seed investor",
+    lookingFor: ["Climate tech", "AI"],
+    canOffer: ["Funding", "Mentorship"],
+    skills: ["Fundraising", "Go-to-market"],
+    interests: ["Sustainability", "Startups"],
+    focus: "early-stage climate and AI teams",
+  },
+  {
+    industry: "Climate tech",
+    position: "Startup founder",
+    lookingFor: ["Funding", "Partnerships"],
+    canOffer: ["Climate tech", "Product strategy"],
+    skills: ["Sustainability", "Customer discovery"],
+    interests: ["Sustainability", "AI"],
+    focus: "practical sustainability tools for small businesses",
+  },
+  {
+    industry: "AI",
+    position: "Machine learning engineer",
+    lookingFor: ["Co-founders", "Pilot customers"],
+    canOffer: ["AI", "Engineering"],
+    skills: ["Python", "AI", "Data engineering"],
+    interests: ["Open source", "AI"],
+    focus: "applied AI prototypes and reliable data pipelines",
+  },
+  {
+    industry: "Design",
+    position: "Product designer",
+    lookingFor: ["Engineering", "Partnerships"],
+    canOffer: ["Design", "Customer discovery"],
+    skills: ["UX research", "Prototyping", "Accessibility"],
+    interests: ["Accessibility", "Community"],
+    focus: "accessible products informed by customer research",
+  },
+  {
+    industry: "Enterprise software",
+    position: "Partnerships director",
+    lookingFor: ["AI", "Product strategy"],
+    canOffer: ["Partnerships", "Pilot customers"],
+    skills: ["Sales", "Go-to-market", "Partnerships"],
+    interests: ["AI", "Startups"],
+    focus: "pilot programs and distribution for enterprise tools",
+  },
+  {
+    industry: "Education",
+    position: "Community lead",
+    lookingFor: ["Mentorship", "Design"],
+    canOffer: ["Community", "Partnerships"],
+    skills: ["Events", "Community", "Marketing"],
+    interests: ["Open source", "Community"],
+    focus: "peer learning communities and founder workshops",
+  },
+  {
+    industry: "Fintech",
+    position: "Engineering lead",
+    lookingFor: ["Hiring", "AI"],
+    canOffer: ["Engineering", "Mentorship"],
+    skills: ["TypeScript", "Security", "Data engineering"],
+    interests: ["AI", "Open source"],
+    focus: "reliable financial software and developer mentoring",
+  },
+  {
+    industry: "Health tech",
+    position: "Product lead",
+    lookingFor: ["Funding", "Pilot customers"],
+    canOffer: ["Product strategy", "Customer discovery"],
+    skills: ["Product strategy", "UX research"],
+    interests: ["Accessibility", "Sustainability"],
+    focus: "healthcare workflows shaped by user interviews",
+  },
+  {
+    industry: "Marketing",
+    position: "Growth advisor",
+    lookingFor: ["Partnerships", "AI"],
+    canOffer: ["Go-to-market", "Marketing"],
+    skills: ["Sales", "Customer discovery", "Marketing"],
+    interests: ["Startups", "Community"],
+    focus: "customer acquisition experiments for early-stage teams",
+  },
+  {
+    industry: "Developer tools",
+    position: "Founding engineer",
+    lookingFor: ["Co-founders", "Funding"],
+    canOffer: ["Engineering", "Open source"],
+    skills: ["TypeScript", "Python", "Developer experience"],
+    interests: ["Open source", "AI"],
+    focus: "developer tools that shorten the path from idea to prototype",
+  },
+];
+
+const givenNames = [
+  "Avery",
+  "Kai",
+  "Elena",
+  "Ravi",
+  "Leila",
+  "Theo",
+  "Amara",
+  "Hugo",
+  "Mei",
+  "Idris",
+  "Sofia",
+  "Nikhil",
+  "Dina",
+  "Owen",
+  "Yuna",
+  "Luca",
+  "Zara",
+  "Arun",
+  "Iris",
+];
+const familyNames = ["Lin", "Patel", "Rahman", "Wong", "Costa"];
+const companyRoots = [
+  "Cedar",
+  "Orbit",
+  "Pebble",
+  "Lantern",
+  "Moss",
+  "Ripple",
+  "Finch",
+  "Cobalt",
+  "Willow",
+  "Quartz",
+];
+
+const generatedAttendees: Attendee[] = Array.from(
+  { length: 94 },
+  (_, index) => {
+    const profile = archetypes[index % archetypes.length];
+    const given = givenNames[Math.floor(index / familyNames.length)];
+    const family = familyNames[index % familyNames.length];
+    return {
+      id: `attendee-${String(index + 7).padStart(3, "0")}`,
+      eventId: demoEvent.id,
+      name: `${given} ${family}`,
+      company: `${companyRoots[index % companyRoots.length]} ${["Works", "Collective", "Labs", "Ventures", "Studio"][Math.floor(index / companyRoots.length) % 5]}`,
+      position: profile.position,
+      industry: profile.industry,
+      lookingFor: [...profile.lookingFor],
+      canOffer: [...profile.canOffer],
+      skills: [...profile.skills],
+      interests: [...profile.interests],
+      bio: `${given} works on ${profile.focus} and is here to exchange practical ideas and meet collaborators.`,
+    };
+  },
+);
+
+export const mockAttendees: Attendee[] = [
+  ...originalAttendees,
+  ...generatedAttendees,
 ];

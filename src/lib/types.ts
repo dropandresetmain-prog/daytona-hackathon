@@ -27,7 +27,7 @@ export interface RecommendationRequest {
 export interface Recommendation {
   rank: number;
   attendee: AttendeeProfile;
-  /** A deterministic relevance score from 0–100, not a probability. */
+  /** A relevance score from 0–100, not a probability. */
   score: number;
   reasons: string[];
   matchedOn: string[];
@@ -39,6 +39,30 @@ export interface RecommendationResponse {
   attendeeId: string;
   eventId: string;
   goal: string;
-  mode: "mock";
+  mode: "mock" | "qwen";
   recommendations: Recommendation[];
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatRequest {
+  attendeeId: string;
+  message: string;
+  sessionId?: string;
+  history?: ChatMessage[];
+}
+
+export interface ChatResponse extends RecommendationResponse {
+  message: string;
+  attendeeCount: number;
+  memory: "client" | "context-store";
+  execution: {
+    provider: "local" | "daytona";
+    model?: string;
+    sandboxId?: string;
+  };
+  warning?: string;
 }

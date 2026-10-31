@@ -8,12 +8,15 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
+    "test:unit": "tsx --test tests/engine-boundaries.test.ts tests/voice-client.test.ts",
+    "check:providers": "tsx scripts/check-providers.ts",
     "test:smoke": "node --test tests/recommendations.test.mjs"
   },
   "engines": {
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@daytona/sdk": "^0.227.0",
     "next": "^16.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
@@ -24,6 +27,7 @@
     "@types/react-dom": "^19.2.0",
     "eslint": "^10.0.0",
     "eslint-config-next": "^16.4.3",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.0"
   }
 }

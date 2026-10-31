@@ -13,6 +13,29 @@ export const mockRecommendationRanker: RecommendationRanker = {
   async rank({ attendee, candidates, goal }) {
     // Literal keyword matching only; this is not semantic understanding or an LLM.
     const goalWords = new Set(normalize(goal).match(/[\p{L}\p{N}]+/gu) ?? []);
+    const relatedWords: Record<string, string[]> = {
+      investor: ["funding", "fundraising"],
+      investors: ["funding", "fundraising"],
+      investment: ["funding"],
+      capital: ["funding"],
+      fundraise: ["funding", "fundraising"],
+      fundraising: ["funding"],
+      developers: ["engineering", "typescript"],
+      developer: ["engineering", "typescript"],
+      engineers: ["engineering"],
+      technical: ["engineering"],
+      designer: ["design"],
+      designers: ["design"],
+      mentors: ["mentorship"],
+      mentor: ["mentorship"],
+      partners: ["partnerships"],
+      partner: ["partnerships"],
+      customers: ["pilot", "customers"],
+      climate: ["sustainability"],
+    };
+    for (const word of [...goalWords]) {
+      for (const related of relatedWords[word] ?? []) goalWords.add(related);
+    }
     return candidates.map((candidate) => {
       const offers = [...candidate.canOffer, ...candidate.skills];
       const needs = intersect(attendee.lookingFor, offers);

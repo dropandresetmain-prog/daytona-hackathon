@@ -4,6 +4,7 @@ out/
 coverage/
 output/
 .playwright-cli/
+.data/
 *.tsbuildinfo
 .env*
 !.env.example
